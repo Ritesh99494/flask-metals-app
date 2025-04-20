@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Performance | Metal Prices Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Metal Prices Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/performance">Performance</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="mb-4">Metal Market Performance</h2>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header gold-header">
+                        <h4 class="mb-0">Gold Performance</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="performance-summary">
+                            <p><strong>Current Price:</strong> ${{ performance_data.Gold.current_price }}</p>
+                            <p><strong>YTD Change:</strong> <span class="{{ 'text-success' if performance_data.Gold.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Gold.ytd_change }}%</span></p>
+                            <p><strong>1-Year Change:</strong> <span class="{{ 'text-success' if performance_data.Gold.year_change >= 0 else 'text-danger' }}">{{ performance_data.Gold.year_change }}%</span></p>
+                            <p><strong>Volatility:</strong> {{ performance_data.Gold.volatility }}%</p>
+                        </div>
+                        <h5 class="mt-4">Monthly Averages (Last 12 Months)</h5>
+                        <canvas id="goldChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header silver-header">
+                        <h4 class="mb-0">Silver Performance</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="performance-summary">
+                            <p><strong>Current Price:</strong> ${{ performance_data.Silver.current_price }}</p>
+                            <p><strong>YTD Change:</strong> <span class="{{ 'text-success' if performance_data.Silver.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Silver.ytd_change }}%</span></p>
+                            <p><strong>1-Year Change:</strong> <span class="{{ 'text-success' if performance_data.Silver.year_change >= 0 else 'text-danger' }}">{{ performance_data.Silver.year_change }}%</span></p>
+                            <p><strong>Volatility:</strong> {{ performance_data.Silver.volatility }}%</p>
+                        </div>
+                        <h5 class="mt-4">Monthly Averages (Last 12 Months)</h5>
+                        <canvas id="silverChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header Platinum-header">
+                        <h4 class="mb-0">Platinum Performance</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="performance-summary">
+                            <p><strong>Current Price:</strong> ${{ performance_data.Platinum.current_price }}</p>
+                            <p><strong>YTD Change:</strong> <span class="{{ 'text-success' if performance_data.Platinum.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Platinum.ytd_change }}%</span></p>
+                            <p><strong>1-Year Change:</strong> <span class="{{ 'text-success' if performance_data.Platinum.year_change >= 0 else 'text-danger' }}">{{ performance_data.Platinum.year_change }}%</span></p>
+                            <p><strong>Volatility:</strong> {{ performance_data.Platinum.volatility }}%</p>
+                        </div>
+                        <h5 class="mt-4">Monthly Averages (Last 12 Months)</h5>
+                        <canvas id="PlatinumChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Comparative Performance</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Metal</th>
+                                        <th>Current Price</th>
+                                        <th>YTD Change</th>
+                                        <th>1-Year Change</th>
+                                        <th>Volatility</th>
+                                        <th>Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Gold</td>
+                                        <td>${{ performance_data.Gold.current_price }}</td>
+                                        <td class="{{ 'text-success' if performance_data.Gold.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Gold.ytd_change }}%</td>
+                                        <td class="{{ 'text-success' if performance_data.Gold.year_change >= 0 else 'text-danger' }}">{{ performance_data.Gold.year_change }}%</td>
+                                        <td>{{ performance_data.Gold.volatility }}%</td>
+                                        <td>
+                                            {% if performance_data.Gold.year_change > 10 %}
+                                                <span class="badge bg-success">Strong Buy</span>
+                                            {% elif performance_data.Gold.year_change > 5 %}
+                                                <span class="badge bg-primary">Buy</span>
+                                            {% elif performance_data.Gold.year_change > 0 %}
+                                                <span class="badge bg-info">Hold</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Watch</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Silver</td>
+                                        <td>${{ performance_data.Silver.current_price }}</td>
+                                        <td class="{{ 'text-success' if performance_data.Silver.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Silver.ytd_change }}%</td>
+                                        <td class="{{ 'text-success' if performance_data.Silver.year_change >= 0 else 'text-danger' }}">{{ performance_data.Silver.year_change }}%</td>
+                                        <td>{{ performance_data.Silver.volatility }}%</td>
+                                        <td>
+                                            {% if performance_data.Silver.year_change > 10 %}
+                                                <span class="badge bg-success">Strong Buy</span>
+                                            {% elif performance_data.Silver.year_change > 5 %}
+                                                <span class="badge bg-primary">Buy</span>
+                                            {% elif performance_data.Silver.year_change > 0 %}
+                                                <span class="badge bg-info">Hold</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Watch</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Platinum</td>
+                                        <td>${{ performance_data.Platinum.current_price }}</td>
+                                        <td class="{{ 'text-success' if performance_data.Platinum.ytd_change >= 0 else 'text-danger' }}">{{ performance_data.Platinum.ytd_change }}%</td>
+                                        <td class="{{ 'text-success' if performance_data.Platinum.year_change >= 0 else 'text-danger' }}">{{ performance_data.Platinum.year_change }}%</td>
+                                        <td>{{ performance_data.Platinum.volatility }}%</td>
+                                        <td>
+                                            {% if performance_data.Platinum.year_change > 10 %}
+                                                <span class="badge bg-success">Strong Buy</span>
+                                            {% elif performance_data.Platinum.year_change > 5 %}
+                                                <span class="badge bg-primary">Buy</span>
+                                            {% elif performance_data.Platinum.year_change > 0 %}
+                                                <span class="badge bg-info">Hold</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Watch</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Metal Prices Dashboard</h5>
+                    <p>A Flask application for tracking metal prices and investment returns.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Data is for demonstration purposes only.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Gold Chart
+        const goldData = {{ performance_data.Gold.monthly_data|tojson }};
+        const goldLabels = goldData.map(item => item.Date);
+        const goldPrices = goldData.map(item => item.Price);
+        
+        new Chart(document.getElementById('goldChart'), {
+            type: 'line',
+            data: {
+                labels: goldLabels,
+                datasets: [{
+                    label: 'Gold Price (USD)',
+                    data: goldPrices,
+                    borderColor: '#FFD700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+        
+        // Silver Chart
+        const silverData = {{ performance_data.Silver.monthly_data|tojson }};
+        const silverLabels = silverData.map(item => item.Date);
+        const silverPrices = silverData.map(item => item.Price);
+        
+        new Chart(document.getElementById('silverChart'), {
+            type: 'line',
+            data: {
+                labels: silverLabels,
+                datasets: [{
+                    label: 'Silver Price (USD)',
+                    data: silverPrices,
+                    borderColor: '#C0C0C0',
+                    backgroundColor: 'rgba(192, 192, 192, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+        
+        // Platinum Chart
+        const PlatinumData = {{ performance_data.Platinum.monthly_data|tojson }};
+        const PlatinumLabels = PlatinumData.map(item => item.Date);
+        const PlatinumPrices = PlatinumData.map(item => item.Price);
+        
+        new Chart(document.getElementById('PlatinumChart'), {
+            type: 'line',
+            data: {
+                labels: PlatinumLabels,
+                datasets: [{
+                    label: 'Platinum Price (USD)',
+                    data: PlatinumPrices,
+                    borderColor: '#B87333',
+                    backgroundColor: 'rgba(184, 115, 51, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
