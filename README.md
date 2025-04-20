@@ -15,7 +15,7 @@ A Flask application that displays real-time metal prices (Gold, Silver, Platinum
 ### 1. Clone the repository
 
 \`\`\`bash
-git clone https://github.com/yourusername/metal-prices-dashboard.git
+git clone https://github.com/Ritesh99494/flask-metals-app.git
 cd metal-prices-dashboard
 \`\`\`
 
