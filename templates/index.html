@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Prices Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <header class="text-center mb-5">
+            <h1 class="display-4">Metal Prices Dashboard</h1>
+            <p class="lead">Track live prices, trends, and calculate investment returns</p>
+            <div class="api-status">
+                <span class="badge {{ 'bg-success' if api_status == 'Live' else 'bg-warning' }}">
+                    {{ api_status }} API
+                </span>
+            </div>
+        </header>
+
+        <div class="row">
+            <!-- Current Prices -->
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Live Metal Prices ({{ prices.date }})</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="price-card gold">
+                                    <h3>Gold</h3>
+                                    <p class="price">${{ prices.gold }}</p>
+                                    <p class="unit">per troy ounce</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="price-card silver">
+                                    <h3>Silver</h3>
+                                    <p class="price">${{ prices.silver }}</p>
+                                    <p class="unit">per troy ounce</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="price-card Platinum">
+                                    <h3>Platinum</h3>
+                                    <p class="price">${{ prices.Platinum }}</p>
+                                    <p class="unit">per pound</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Chart -->
+            <div class="col-md-8 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Price Trends (Last 30 Days)</h2>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictions -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Predicted Prices</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="prediction-card gold mb-3">
+                            <h4>Gold</h4>
+                            <p class="prediction-price">${{ predictions.gold }}</p>
+                            <p class="prediction-change 
+                                {{ 'text-success' if predictions.gold > prices.gold else 'text-danger' }}">
+                                {{ "+" if predictions.gold > prices.gold else "" }}{{ (predictions.gold - prices.gold)|round(2) }} 
+                                ({{ ((predictions.gold - prices.gold) / prices.gold * 100)|round(2) }}%)
+                            </p>
+                        </div>
+                        <div class="prediction-card silver mb-3">
+                            <h4>Silver</h4>
+                            <p class="prediction-price">${{ predictions.silver }}</p>
+                            <p class="prediction-change 
+                                {{ 'text-success' if predictions.silver > prices.silver else 'text-danger' }}">
+                                {{ "+" if predictions.silver > prices.silver else "" }}{{ (predictions.silver - prices.silver)|round(2) }} 
+                                ({{ ((predictions.silver - prices.silver) / prices.silver * 100)|round(2) }}%)
+                            </p>
+                        </div>
+                        <div class="prediction-card Platinum">
+                            <h4>Platinum</h4>
+                            <p class="prediction-price">${{ predictions.Platinum }}</p>
+                            <p class="prediction-change 
+                                {{ 'text-success' if predictions.Platinum > prices.Platinum else 'text-danger' }}">
+                                {{ "+" if predictions.Platinum > prices.Platinum else "" }}{{ (predictions.Platinum - prices.Platinum)|round(2) }} 
+                                ({{ ((predictions.Platinum - prices.Platinum) / prices.Platinum * 100)|round(2) }}%)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Investment Calculator -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Investment Return Calculator</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Estimated Annual Growth Rates: Gold: {{ growth_rates.gold }}%, Silver: {{ growth_rates.silver }}%, Platinum: {{ growth_rates.Platinum }}%</p>
+                        <form method="POST" class="mb-4">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Investment Amount ($):</label>
+                                <input type="number" step="any" name="amount" id="amount" required class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label for="years" class="form-label">Years of Investment:</label>
+                                <input type="number" name="years" id="years" required class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Calculate</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Results -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Expected Returns</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if investment_result %}
+                            {% if investment_result.error %}
+                                <div class="alert alert-danger">{{ investment_result.error }}</div>
+                            {% else %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Metal</th>
+                                                <th>Initial</th>
+                                                <th>Units</th>
+                                                <th>Future Value</th>
+                                                <th>Return</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for metal in ['gold', 'silver', 'Platinum'] %}
+                                            <tr>
+                                                <td>{{ metal|capitalize }}</td>
+                                                <td>${{ investment_result[metal].initial_investment }}</td>
+                                                <td>{{ investment_result[metal].units_purchased }}</td>
+                                                <td>${{ investment_result[metal].future_value }}</td>
+                                                <td class="{{ 'text-success' if investment_result[metal].percent_return > 0 else 'text-danger' }}">
+                                                    ${{ investment_result[metal].total_return }} 
+                                                    ({{ investment_result[metal].percent_return }}%)
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-center text-muted">Enter investment details to see expected returns</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Price Records -->
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Recent Price Records</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Gold</th>
+                                        <th>Silver</th>
+                                        <th>Platinum</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table %}
+                                    <tr>
+                                        <td>{{ row.date }}</td>
+                                        <td>${{ row.gold }}</td>
+                                        <td>${{ row.silver }}</td>
+                                        <td>${{ row.Platinum }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-4 mb-5">
+            <p>Metal Prices Dashboard &copy; 2025 |Moneta-IQ </p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize price chart
+        const chartData = {{ chart_data|safe }};
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.dates,
+                datasets: [
+                    {
+                        label: 'Gold (USD)',
+                        data: chartData.gold,
+                        borderColor: '#FFD700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Silver (USD)',
+                        data: chartData.silver,
+                        borderColor: '#C0C0C0',
+                        backgroundColor: 'rgba(192, 192, 192, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Platinum (USD)',
+                        data: chartData.Platinum,
+                        borderColor: '#B87333',
+                        backgroundColor: 'rgba(184, 115, 51, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Price (USD)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
